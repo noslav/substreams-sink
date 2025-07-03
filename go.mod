@@ -1,4 +1,4 @@
-module github.com/streamingfast/substreams-sink
+module github.com/noslav/substreams-sink
 
 go 1.23.4
 

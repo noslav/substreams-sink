@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/bobg/go-generics/v4/slices"
+	"github.com/cenkalti/backoff/v4"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/streamingfast/bstream"
@@ -159,6 +160,7 @@ func NewFromViper(
 	endpoint, manifestPath, outputModuleName, blockRange string,
 	zlog *zap.Logger,
 	tracer logging.Tracer,
+	backoff backoff.BackOff,
 	opts ...Option,
 ) (*Sinker, error) {
 	params, network, undoBufferSize, liveBlockTimeDelta, isDevelopmentMode, infiniteRetry, finalBlocksOnly, skipPackageValidation, isNoopMode, extraHeaders := getViperFlags(cmd)
@@ -253,6 +255,7 @@ func NewFromViper(
 		clientConfig,
 		zlog,
 		tracer,
+		backoff,
 		append(defaultSinkOptions, opts...)...,
 	)
 }

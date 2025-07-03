@@ -76,11 +76,11 @@ func New(
 	clientConfig *client.SubstreamsClientConfig,
 	logger *zap.Logger,
 	tracer logging.Tracer,
+	retryBackoff backoff.BackOff,
 	opts ...Option,
 ) (*Sinker, error) {
 
-	bo := backoff.NewExponentialBackOff()
-	bo.MaxElapsedTime = 0
+	bo := retryBackoff
 
 	s := &Sinker{
 		Shutter:          shutter.New(),
