@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	sink "github.com/noslav/substreams-sink"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/streamingfast/cli"
 	. "github.com/streamingfast/cli"
 	"github.com/streamingfast/logging"
-	sink "github.com/streamingfast/substreams-sink"
 	pbchanges "github.com/streamingfast/substreams-sink-database-changes/pb/sf/substreams/sink/database/v1"
 	pbsubstreamsrpc "github.com/streamingfast/substreams/pb/sf/substreams/rpc/v2"
 )

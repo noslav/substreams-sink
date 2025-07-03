@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
+	sink "github.com/noslav/substreams-sink"
 	"github.com/streamingfast/cli"
 	"github.com/streamingfast/logging"
-	sink "github.com/streamingfast/substreams-sink"
 	pbchanges "github.com/streamingfast/substreams-sink-database-changes/pb/sf/substreams/sink/database/v1"
 	"github.com/streamingfast/substreams/client"
 	pbsubstreamsrpc "github.com/streamingfast/substreams/pb/sf/substreams/rpc/v2"
