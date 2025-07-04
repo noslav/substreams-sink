@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/cenkalti/backoff/v4"
 	sink "github.com/noslav/substreams-sink"
 	"github.com/streamingfast/cli"
 	"github.com/streamingfast/logging"
@@ -67,6 +68,7 @@ func main() {
 		client.NewSubstreamsClientConfig(endpoint, os.Getenv("SUBSTREAMS_API_TOKEN"), client.JWT, false, false, "substreams-sink/example-basic"),
 		zlog,
 		tracer,
+		backoff.NewExponentialBackOff(),
 		sink.WithBlockRange(blockRange),
 	)
 	cli.NoError(err, "unable to create sinker: %s", err)

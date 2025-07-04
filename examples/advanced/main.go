@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/cenkalti/backoff"
 	sink "github.com/noslav/substreams-sink"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -65,6 +66,7 @@ func sinkRunE(cmd *cobra.Command, args []string) error {
 		zlog,
 		tracer,
 		// Use a unique agent name for your sink
+		backoff.NewExponentialBackOff(),
 		sink.WithAgent("substreams-sink/example-advanced"),
 	)
 	cli.NoError(err, "unable to create sinker: %s", err)
