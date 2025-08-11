@@ -15,7 +15,14 @@ import (
 	pbsubstreamsrpc "github.com/streamingfast/substreams/pb/sf/substreams/rpc/v2"
 )
 
-var expectedOutputModuleType = string(new(pbchanges.DatabaseChanges).ProtoReflect().Descriptor().FullName())
+// Support both Ethereum and Bitcoin block types
+var expectedOutputModuleType = sink.MultiChainBlockTypes
+
+// Alternative: you can also create custom combinations:
+// var expectedOutputModuleType = sink.CreateMultiChainExpectedType(sink.EthereumBlockType, sink.BitcoinBlockType, "custom.type")
+
+// Original database changes type (commented out for multi-chain support):
+// var expectedOutputModuleType = string(new(pbchanges.DatabaseChanges).ProtoReflect().Descriptor().FullName())
 
 var zlog, tracer = logging.RootLogger("project", "github.com/change_to_org/change_to_project")
 
