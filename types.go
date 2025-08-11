@@ -169,3 +169,15 @@ func (c *Cursor) String() string {
 //
 // )
 type SubstreamsMode uint
+
+// Common blockchain type constants for expectedOutputModuleType validation
+const (
+	// EthereumBlockType represents Ethereum block type
+	EthereumBlockType = "sf.ethereum.type.v2.Block"
+
+	// BitcoinBlockType represents Bitcoin block type
+	BitcoinBlockType = "sf.bitcoin.type.v1.Block"
+
+	// MultiChainBlockTypes supports both Bitcoin and Ethereum block types
+	MultiChainBlockTypes = EthereumBlockType + "," + BitcoinBlockType
+)
