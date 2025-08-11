@@ -85,7 +85,7 @@ func ReadManifestAndModule(
 		unprefixedActualType, prefixedActualType := sanitizeModuleType(module.Output.Type)
 
 		if !slices.Contains(prefixedExpectedTypes, prefixedActualType) {
-			return nil, nil, nil, fmt.Errorf("sink only supports map module with output type %q but selected module %q output type is %q", strings.Join(unprefixedExpectedTypes, ", "), module.Name, unprefixedActualType)
+			return nil, nil, nil, fmt.Errorf("sink only supports modules with output type %q but selected module %q has output type %q", strings.Join(unprefixedExpectedTypes, ", "), module.Name, unprefixedActualType)
 		}
 	}
 
@@ -96,6 +96,18 @@ func ReadManifestAndModule(
 	}
 
 	return pkg, module, outputModuleHash, nil
+}
+
+// CreateMultiChainExpectedType creates a comma-separated string of expected output module types
+// for multiple blockchains. This is useful when you want to support multiple blockchain types
+// in a single sink configuration.
+//
+// Example:
+//
+//	expectedType := CreateMultiChainExpectedType(EthereumBlockType, BitcoinBlockType)
+//	// Returns: "sf.ethereum.type.v2.Block,sf.bitcoin.type.v1.Block"
+func CreateMultiChainExpectedType(types ...string) string {
+	return strings.Join(types, ",")
 }
 
 // ReadManifestAndModuleAndBlockRange acts exactly like ReadManifestAndModule but also reads the block range.
