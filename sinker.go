@@ -39,6 +39,14 @@ const IgnoreOutputModuleType string = "@!##_IgnoreOutputModuleType_##!@"
 // via the `SinkModule` field.
 const InferOutputModuleFromPackage string = "@!##_InferOutputModuleFromSpkg_##!@"
 
+// blockProcessingTask represents a block processing task for async processing
+type blockProcessingTask struct {
+	blockScopedData *pbsubstreamsrpc.BlockScopedData
+	isLive          *bool
+	cursor          *Cursor
+	resultChan      chan error
+}
+
 type Sinker struct {
 	*shutter.Shutter
 
@@ -61,6 +69,10 @@ type Sinker struct {
 	livenessChecker LivenessChecker
 	extraHeaders    []string
 	agent           string
+
+	// Async processing options
+	asyncProcessing       bool
+	processingChannelSize int
 
 	// State
 	stats                   *Stats
@@ -118,6 +130,8 @@ func New(
 		zap.Bool("infinite_retry", s.infiniteRetry),
 		zap.Bool("final_blocks_only", s.finalBlocksOnly),
 		zap.Bool("liveness_checker", s.livenessChecker != nil),
+		zap.Bool("async_processing", s.asyncProcessing),
+		zap.Int("processing_channel_size", s.processingChannelSize),
 	)
 
 	return s, nil
@@ -376,6 +390,30 @@ func (s *Sinker) doRequest(
 		return activeCursor, receivedMessage, retryable(fmt.Errorf("call sf.substreams.rpc.v2.Stream/Blocks: %w", err))
 	}
 
+	// Setup async processing if enabled
+	var processingChan chan *blockProcessingTask
+	var processingDone chan struct{}
+	if s.asyncProcessing {
+		processingChan = make(chan *blockProcessingTask, s.processingChannelSize)
+		processingDone = make(chan struct{})
+
+		// Start async processor goroutine
+		go func() {
+			defer close(processingDone)
+			for task := range processingChan {
+				err := handler.HandleBlockScopedData(ctx, task.blockScopedData, task.isLive, task.cursor)
+				task.resultChan <- err
+				close(task.resultChan)
+			}
+		}()
+
+		// Cleanup function when we exit doRequest
+		defer func() {
+			close(processingChan)
+			<-processingDone
+		}()
+	}
+
 	for {
 		if s.tracer.Enabled() {
 			s.logger.Debug("substreams waiting to receive message", zap.Stringer("cursor", activeCursor))
@@ -500,8 +538,30 @@ func (s *Sinker) doRequest(
 						isLive = &liveBlock
 					}
 				}
-				if err := handler.HandleBlockScopedData(ctx, blockScopedData, isLive, currentCursor); err != nil {
-					return activeCursor, receivedMessage, fmt.Errorf("handle BlockScopedData message at block %s: %w", block, err)
+
+				if s.asyncProcessing {
+					// Async processing: send to channel and wait for result
+					task := &blockProcessingTask{
+						blockScopedData: blockScopedData,
+						isLive:          isLive,
+						cursor:          currentCursor,
+						resultChan:      make(chan error, 1),
+					}
+
+					select {
+					case processingChan <- task:
+						// Block sent for processing, wait for result
+						if err := <-task.resultChan; err != nil {
+							return activeCursor, receivedMessage, fmt.Errorf("handle BlockScopedData message at block %s: %w", block, err)
+						}
+					case <-ctx.Done():
+						return activeCursor, receivedMessage, ctx.Err()
+					}
+				} else {
+					// Synchronous processing (original behavior)
+					if err := handler.HandleBlockScopedData(ctx, blockScopedData, isLive, currentCursor); err != nil {
+						return activeCursor, receivedMessage, fmt.Errorf("handle BlockScopedData message at block %s: %w", block, err)
+					}
 				}
 			}
 

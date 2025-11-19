@@ -91,3 +91,20 @@ func WithAgent(agent string) Option {
 		s.agent = agent
 	}
 }
+
+// WithAsyncProcessing enables asynchronous block processing to prevent slow handler
+// operations from blocking the receive loop. Blocks are queued in a channel and
+// processed by a separate goroutine.
+//
+// The channelSize parameter controls the buffer size of the processing channel.
+// A larger buffer allows more blocks to be queued, but uses more memory.
+// Recommended values: 10-100 depending on your handler latency and memory constraints.
+func WithAsyncProcessing(channelSize int) Option {
+	return func(s *Sinker) {
+		s.asyncProcessing = true
+		if channelSize <= 0 {
+			channelSize = 10
+		}
+		s.processingChannelSize = channelSize
+	}
+}
